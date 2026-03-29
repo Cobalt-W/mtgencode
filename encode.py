@@ -10,6 +10,8 @@ import utils
 import jdecode
 import cardlib
 
+from io import open as io_open
+
 def main(fname, oname = None, verbose = True, encoding = 'std', 
          nolinetrans = False, randomize = False, nolabel = False, stable = False):
     fmt_ordered = cardlib.fmt_ordered_default
@@ -71,6 +73,7 @@ def main(fname, oname = None, verbose = True, encoding = 'std',
             if encoding in ['vec']:
                 writer.write(card.vectorize() + '\n\n')
             else:
+                print card.name
                 writer.write(card.encode(fmt_ordered = fmt_ordered,
                                          fmt_labeled = fmt_labeled,
                                          fieldsep = fieldsep,
@@ -83,7 +86,7 @@ def main(fname, oname = None, verbose = True, encoding = 'std',
     if oname:
         if verbose:
             print 'Writing output to: ' + oname
-        with open(oname, 'w') as ofile:
+        with io_open(oname, 'w', encoding='utf-8') as ofile:
             writecards(ofile)
     else:
         writecards(sys.stdout)
