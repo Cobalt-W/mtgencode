@@ -64,6 +64,7 @@ field_loyalty = 'loyalty'
 field_pt = 'pt'
 field_text = 'text'
 field_other = 'other' # it's kind of a pseudo-field
+field_flavor = 'flavor'
 
 # Import the labels, because these do appear in the encoded text.
 field_label_name = utils.field_label_name
@@ -75,6 +76,7 @@ field_label_subtypes = utils.field_label_subtypes
 field_label_loyalty = utils.field_label_loyalty
 field_label_pt = utils.field_label_pt
 field_label_text = utils.field_label_text
+field_label_flavor = utils.field_label_flavor
 
 fieldnames = [
     field_name,
@@ -86,6 +88,7 @@ fieldnames = [
     field_loyalty,
     field_pt,
     field_text,
+	field_flavor,
 ]
 
 # legacy
@@ -244,11 +247,13 @@ def fields_from_json(src_json, linetrans = True):
         parsed = False
 
     # return the actual Manacost object
-    if 'manaCost' in src_json:
-        cost =  Manacost(src_json['manaCost'], fmt = 'json')
-        valid = valid and cost.valid
-        parsed = parsed and cost.parsed
-        fields[field_cost] = [(-1, cost)]
+	
+    #if 'manaCost' in src_json:
+        #cost =  Manacost(src_json['manaCost'], fmt = 'json')
+       # valid = valid and cost.valid
+       # parsed = parsed and cost.parsed
+       # fields[field_cost] = [(-1, cost)]
+		
 
     if 'supertypes' in src_json:
         fields[field_supertypes] = [(-1, map(lambda s: utils.to_ascii(s.lower()), 
@@ -267,32 +272,32 @@ def fields_from_json(src_json, linetrans = True):
                                            src_json['subtypes']))]
         
 
-    if 'rarity' in src_json:
-        if src_json['rarity'] in utils.json_rarity_map:
-            fields[field_rarity] = [(-1, utils.json_rarity_map[src_json['rarity']])]
-        else:
-            fields[field_rarity] = [(-1, src_json['rarity'])]
-            parsed = False
-    else:
-        parsed = False
+   # if 'rarity' in src_json:
+     #   if src_json['rarity'] in utils.json_rarity_map:
+      #      fields[field_rarity] = [(-1, utils.json_rarity_map[src_json['rarity']])]
+      #  else:
+       #     fields[field_rarity] = [(-1, src_json['rarity'])]
+        #    parsed = False
+  #  else:
+     #   parsed = False
 
-    if 'loyalty' in src_json:
+   # if 'loyalty' in src_json:
         fields[field_loyalty] = [(-1, utils.to_unary(str(src_json['loyalty'])))]
 
-    p_t = ''
-    parsed_pt = True
-    if 'power' in src_json:
-        p_t = utils.to_ascii(utils.to_unary(src_json['power'])) + '/' # hardcoded
-        parsed_pt = False
-        if 'toughness' in src_json:
-            p_t = p_t + utils.to_ascii(utils.to_unary(src_json['toughness']))
-            parsed_pt = True
-    elif 'toughness' in src_json:
-        p_t = '/' + utils.to_ascii(utils.to_unary(src_json['toughness'])) # hardcoded
-        parsed_pt = False
-    if p_t:
-        fields[field_pt] = [(-1, p_t)]
-    parsed = parsed and parsed_pt
+  #  p_t = ''
+  #  parsed_pt = True
+  #  if 'power' in src_json:
+   #     p_t = utils.to_ascii(utils.to_unary(src_json['power'])) + '/' # hardcoded
+  #      parsed_pt = False
+  #      if 'toughness' in src_json:
+  #          p_t = p_t + utils.to_ascii(utils.to_unary(src_json['toughness']))
+  #          parsed_pt = True
+  #  elif 'toughness' in src_json:
+  #      p_t = '/' + utils.to_ascii(utils.to_unary(src_json['toughness'])) # hardcoded
+  #      parsed_pt = False
+  #  if p_t:
+  #      fields[field_pt] = [(-1, p_t)]
+  #  parsed = parsed and parsed_pt
         
     # similarly, return the actual Manatext object
     if 'text' in src_json:
@@ -427,6 +432,9 @@ class Card:
         self.__dict__[field_text + '_lines'] = []
         self.__dict__[field_text + '_words'] = []
         self.__dict__[field_text + '_lines_words'] = []
+		self.__dict__[field_flavor + '_lines'] = []
+        self.__dict__[field_flavor + '_words'] = []
+        self.__dict__[field_flavor + '_lines_words'] = []						
         self.__dict__[field_other] = []
         self.bside = None
         # format-independent view of processed input
@@ -559,7 +567,27 @@ class Card:
             else:
                 self.valid = False
                 self.__dict__[field_other] += [(idx, '<text> ' + str(value))]
-        
+     
+		def _set_flavor(self, values):
+        first = True
+        for idx, value in values:
+            if first:
+                first = False
+                mtext = value
+                self.__dict__[field_text] = mtext
+                fulltext = mtext.encode()
+                if fulltext:
+                    self.__dict__[field_text + '_lines'] = map(Manatext, 
+                                                               fulltext.split(utils.newline))
+                    self.__dict__[field_text + '_words'] = re.sub(utils.unletters_regex, 
+                                                                  ' ', 
+                                                                  fulltext).split()
+                    self.__dict__[field_text + '_lines_words'] = map(
+                        lambda line: re.sub(utils.unletters_regex, ' ', line).split(),
+                        fulltext.split(utils.newline))
+            else:
+                self.valid = False
+                self.__dict__[field_other] += [(idx, '<text> ' + str(value))]    
     def _set_other(self, values):
         # just record these, we could do somthing unset valid if we really wanted
         for idx, value in values:
