@@ -1,7 +1,7 @@
 import json
 
 import utils
-import cardlib
+import cardlib_flavor
 
 def mtg_open_json(fname, verbose = False):
 
@@ -143,7 +143,7 @@ def mtg_open_file(fname, verbose = False,
             text = f.read()
         for card_src in text.split(utils.cardsep):
             if card_src:
-                card = cardlib.Card(card_src, fmt_ordered=fmt_ordered)
+                card = cardlib_flavor.Card(card_src, fmt_ordered=fmt_ordered)
                 # unlike opening from json, we still want to return invalid cards
                 cards += [card]
                 if card.valid:
